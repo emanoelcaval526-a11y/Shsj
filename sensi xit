@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlueSensi - Painel FFH4X</title>
+    <style>
+        body {
+            background-color: #000510;
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: linear-gradient(145deg, #00081a, #001a4d);
+            padding: 30px;
+            border-radius: 20px;
+            border: 2px solid #00a2ff;
+            box-shadow: 0 0 25px rgba(0, 162, 255, 0.4);
+            width: 360px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #00a2ff;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin: 0;
+            text-shadow: 0 0 10px #00a2ff;
+        }
+
+        .subtitle {
+            font-size: 10px;
+            color: #888;
+            margin-bottom: 20px;
+        }
+
+        /* Estilo das Marcas */
+        .grid-marcas {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn-marca {
+            background: #001233;
+            color: #00a2ff;
+            border: 1px solid #00a2ff;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: 0.3s;
+        }
+
+        .btn-marca.active {
+            background: #00a2ff;
+            color: white;
+            box-shadow: 0 0 15px #00a2ff;
+        }
+
+        /* Botão Injetar */
+        #btn-injetar {
+            width: 100%;
+            background: #00a2ff;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            display: none; /* Só aparece após selecionar marca */
+        }
+
+        /* Barra de Progresso */
+        #progresso-container {
+            display: none;
+            margin: 20px 0;
+        }
+
+        .barra-bg {
+            background: #001233;
+            height: 10px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #00a2ff;
+        }
+
+        .barra-fill {
+            height: 100%;
+            width: 0%;
+            background: #00a2ff;
+            box-shadow: 0 0 10px #00a2ff;
+            transition: width 0.1s linear;
+        }
+
+        /* Resultado */
+        #resultado {
+            display: none;
+            background: rgba(0, 162, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 5px solid #00a2ff;
+            text-align: left;
+        }
+
+        .valor { color: #00a2ff; font-weight: bold; float: right; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>BlueSensi</h1>
+    <p class="subtitle">SISTEMA DE INJEÇÃO V3.0</p>
+    
+    <div class="grid-marcas">
+        <button class="btn-marca" onclick="selecionar(this, 'Samsung')">Samsung</button>
+        <button class="btn-marca" onclick="selecionar(this, 'Xiaomi')">Xiaomi</button>
+        <button class="btn-marca" onclick="selecionar(this, 'Motorola')">Motorola</button>
+        <button class="btn-marca" onclick="selecionar(this, 'iPhone')">iPhone</button>
+        <button class="btn-marca" onclick="selecionar(this, 'POCO')">POCO</button>
+        <button class="btn-marca" onclick="selecionar(this, 'Realme')">Realme</button>
+    </div>
+
+    <button id="btn-injetar" onclick="injetar()">Injetar Sensi</button>
+
+    <div id="progresso-container">
+        <div id="status-texto">Injetando... <span id="porcentagem">0</span>%</div>
+        <div class="barra-bg">
+            <div class="barra-fill" id="barra"></div>
+        </div>
+    </div>
+
+    <div id="resultado">
+        <h3 id="marca-escolhida" style="margin:0 0 10px 0; font-size: 16px;"></h3>
+        <div>Geral: <span class="valor" id="v1">--</span></div>
+        <div>Red Dot: <span class="valor" id="v2">--</span></div>
+        <div>Mira 2x: <span class="valor" id="v3">--</span></div>
+        <div>Mira 4x: <span class="valor" id="v4">--</span></div>
+        <div style="margin-top:5px; border-top: 1px dashed #00a2ff; padding-top:5px;">
+            DPI: <span class="valor" id="v5">--</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    let marcaSelecionada = "";
+
+    function selecionar(btn, marca) {
+        // Resetar botões
+        document.querySelectorAll('.btn-marca').forEach(b => b.classList.remove('active'));
+        // Ativar selecionado
+        btn.classList.add('active');
+        marcaSelecionada = marca;
+        // Mostrar botão injetar
+        document.getElementById('btn-injetar').style.display = 'block';
+        // Esconder resultados antigos
+        document.getElementById('resultado').style.display = 'none';
+        document.getElementById('progresso-container').style.display = 'none';
+    }
+
+    function injetar() {
+        const btnInjetar = document.getElementById('btn-injetar');
+        const containerProgresso = document.getElementById('progresso-container');
+        const barra = document.getElementById('barra');
+        const textoPorcentagem = document.getElementById('porcentagem');
+        
+        btnInjetar.style.display = 'none';
+        containerProgresso.style.display = 'block';
+        
+        let progresso = 0;
+        const intervalo = setInterval(() => {
+            progresso++;
+            barra.style.width = progresso + '%';
+            textoPorcentagem.innerText = progresso;
+
+            if (progresso >= 100) {
+                clearInterval(intervalo);
+                mostrarSensi();
+            }
+        }, 30); // Velocidade do carregamento
+    }
+
+    function mostrarSensi() {
+        document.getElementById('progresso-container').style.display = 'none';
+        document.getElementById('resultado').style.display = 'block';
+        document.getElementById('marca-escolhida').innerText = "SENSI ATIVADA: " + marcaSelecionada;
+
+        // Gerar valores aleatórios bons
+        document.getElementById('v1').innerText = Math.floor(Math.random() * 11) + 89; // 89-100
+        document.getElementById('v2').innerText = Math.floor(Math.random() * 15) + 80; // 80-95
+        document.getElementById('v3').innerText = Math.floor(Math.random() * 10) + 90; // 90-100
+        document.getElementById('v4').innerText = Math.floor(Math.random() * 10) + 85; // 85-95
+        document.getElementById('v5').innerText = Math.floor(Math.random() * 300) + 400; // 400-700
+    }
+</script>
+
+</body>
+</html>
